@@ -36,8 +36,31 @@ public final class WebCrawlerMain {
 
     CrawlResult result = crawler.crawl(config.getStartPages());
     CrawlResultWriter resultWriter = new CrawlResultWriter(result);
-    // TODO: Write the crawl results to a JSON file (or System.out if the file name is empty)
-    // TODO: Write the profile data to a text file (or System.out if the file name is empty)
+    // TODO: Write the crawl results to a JSON file (or System.out if the file name is empty) --> Done.
+    // Use this to just execute this task -->  java -classpath target/udacity-webcrawler-1.0.jar com.udacity.webcrawler.main.WebCrawlerMain src/main/java/com/udacity/webcrawler/main/config/sample_config_sequential.json
+
+    String resultPath = config.getResultPath();
+
+    if (resultPath.isBlank()) {
+      Writer stdoutWriter = new BufferedWriter(new OutputStreamWriter(System.out));
+      resultWriter.write(stdoutWriter);
+      stdoutWriter.flush();
+    } else {
+      Path path = Path.of(resultPath.trim());
+      resultWriter.write(path);
+    }
+
+    // TODO: Write the profile data to a text file (or System.out if the file name is empty) --> Done.
+
+    String profileOutputPath = config.getProfileOutputPath();
+    if (profileOutputPath.isBlank()) {
+      Writer stdoutWriter = new BufferedWriter(new OutputStreamWriter(System.out));
+      profiler.writeData(stdoutWriter);
+      stdoutWriter.flush();
+    } else {
+      Path path = Path.of(profileOutputPath.trim());
+      profiler.writeData(path);
+    }
   }
 
   public static void main(String[] args) throws Exception {
