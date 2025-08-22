@@ -1,4 +1,4 @@
-package com.udacity.webcrawler.json;
+package com.udacity.webcrawler.exceptions.jsonexceptions;
 
 public class ConfigurationParseException extends RuntimeException {
   public ConfigurationParseException(String message) {

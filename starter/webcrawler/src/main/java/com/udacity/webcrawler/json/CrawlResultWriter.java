@@ -1,7 +1,13 @@
 package com.udacity.webcrawler.json;
 
+import com.udacity.webcrawler.exceptions.jsonexceptions.CrawlResultWriteException;
+import com.udacity.webcrawler.jsonutils.JsonUtils;
+
+import java.io.IOException;
 import java.io.Writer;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 
 /**
@@ -9,6 +15,8 @@ import java.util.Objects;
  */
 public final class CrawlResultWriter {
   private final CrawlResult result;
+//  private static final ObjectMapper objMapper = new ObjectMapper().disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+
 
   /**
    * Creates a new {@link CrawlResultWriter} that will write the given {@link CrawlResult}.
@@ -25,10 +33,11 @@ public final class CrawlResultWriter {
    *
    * @param path the file path where the crawl result data should be written.
    */
-  public void write(Path path) {
-    // This is here to get rid of the unused variable warning.
-    Objects.requireNonNull(path);
-    // TODO: Fill in this method.
+  public void write(Path path) throws IOException {
+    // TODO: Fill in this method. --> Done.
+    try (Writer writer = Files.newBufferedWriter(path, StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+      write(writer);
+    }
   }
 
   /**
@@ -38,7 +47,13 @@ public final class CrawlResultWriter {
    */
   public void write(Writer writer) {
     // This is here to get rid of the unused variable warning.
-    Objects.requireNonNull(writer);
-    // TODO: Fill in this method.
+    // TODO: Fill in this method. --> Done.
+    try {
+//      objMapper.writerWithDefaultPrettyPrinter().writeValue(Objects.requireNonNull(writer), result);
+      JsonUtils.convertToJson(writer, result, true);
+    } catch (IOException e) {
+//      e.printStackTrace();
+      throw new CrawlResultWriteException("Failed to write crawl result ", e);
+    }
   }
 }

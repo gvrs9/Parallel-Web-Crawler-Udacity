@@ -1,7 +1,7 @@
 package com.udacity.webcrawler.json;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.udacity.webcrawler.exceptions.jsonexceptions.ConfigurationParseException;
+import com.udacity.webcrawler.jsonutils.JsonUtils;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -15,7 +15,7 @@ import java.util.Objects;
 public final class ConfigurationLoader {
 
   private final Path path;
-  private static final ObjectMapper objMapper = new ObjectMapper().disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
+//  private static final ObjectMapper objMapper = new ObjectMapper().disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
 
   /**
    * Create a {@link ConfigurationLoader} that loads configuration from the given {@link Path}.
@@ -48,9 +48,10 @@ public final class ConfigurationLoader {
     // Objects.requireNonNull(reader);
     // TODO: Fill in this method --> Done!
     try {
-      return objMapper.readValue(Objects.requireNonNull(reader), CrawlerConfiguration.Builder.class).build();
+//      return objMapper.readValue(Objects.requireNonNull(reader), CrawlerConfiguration.Builder.class).build();
+      return JsonUtils.convertFromJson(reader, CrawlerConfiguration.Builder.class).build();
     } catch (IOException e) {
-      throw new ConfigurationParseException("Failed to parse JSON crawler configuration", e);
+      throw new ConfigurationParseException("Failed to parse JSON crawler configuration ", e);
 //      throw new RuntimeException();
     }
   }

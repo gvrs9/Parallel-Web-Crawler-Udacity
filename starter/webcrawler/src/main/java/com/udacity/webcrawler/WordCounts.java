@@ -4,12 +4,13 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.stream.Collectors;
 
 /**
  * Utility class that sorts the map of word counts.
  *
  * <p>TODO: Reimplement the sort() method using only the Stream API and lambdas and/or method
- *          references.
+ * references.
  */
 final class WordCounts {
 
@@ -19,7 +20,7 @@ final class WordCounts {
    * {@param popluarWordCount} words and counts.
    *
    * <p>TODO: Reimplement this method using only the Stream API and lambdas and/or method
-   *          references.
+   * references.
    *
    * @param wordCounts       the unsorted map of word counts.
    * @param popularWordCount the number of popular words to include in the result map.
@@ -27,9 +28,9 @@ final class WordCounts {
    */
   static Map<String, Integer> sort(Map<String, Integer> wordCounts, int popularWordCount) {
 
-    // TODO: Reimplement this method using only the Stream API and lambdas and/or method references.
+    // TODO: Reimplement this method using only the Stream API and lambdas and/or method references. --> Done.
 
-    PriorityQueue<Map.Entry<String, Integer>> sortedCounts =
+    /*PriorityQueue<Map.Entry<String, Integer>> sortedCounts =
         new PriorityQueue<>(wordCounts.size(), new WordCountComparator());
     sortedCounts.addAll(wordCounts.entrySet());
     Map<String, Integer> topCounts = new LinkedHashMap<>();
@@ -37,7 +38,13 @@ final class WordCounts {
       Map.Entry<String, Integer> entry = sortedCounts.poll();
       topCounts.put(entry.getKey(), entry.getValue());
     }
-    return topCounts;
+    return topCounts;*/
+
+    return wordCounts.entrySet().stream()
+            .sorted(new WordCountComparator())
+            .limit(popularWordCount)
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+
   }
 
   /**
