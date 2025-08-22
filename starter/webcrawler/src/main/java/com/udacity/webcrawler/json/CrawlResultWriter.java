@@ -1,7 +1,7 @@
 package com.udacity.webcrawler.json;
 
 import com.udacity.webcrawler.exceptions.jsonexceptions.CrawlResultWriteException;
-import com.udacity.webcrawler.jsonutils.JsonUtils;
+import com.udacity.webcrawler.utils.JsonUtils;
 
 import java.io.IOException;
 import java.io.Writer;

@@ -1,4 +1,4 @@
-package com.udacity.webcrawler.jsonutils;
+package com.udacity.webcrawler.utils;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
