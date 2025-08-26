@@ -34,13 +34,13 @@ final class ParallelWebCrawler implements WebCrawler {
 
   @Inject
   ParallelWebCrawler(
-      Clock clock,
-      PageParserFactory parserFactory,
-      @Timeout Duration timeout,
-      @PopularWordCount int popularWordCount,
-      @MaxDepth int maxDepth,
-      @IgnoredUrls List<Pattern> ignoredUrls,
-      @TargetParallelism int threadCount) {
+          Clock clock,
+          PageParserFactory parserFactory,
+          @Timeout Duration timeout,
+          @PopularWordCount int popularWordCount,
+          @MaxDepth int maxDepth,
+          @IgnoredUrls List<Pattern> ignoredUrls,
+          @TargetParallelism int threadCount) {
     this.clock = clock;
     this.parserFactory = parserFactory;
     this.timeout = timeout;
@@ -58,10 +58,22 @@ final class ParallelWebCrawler implements WebCrawler {
     ConcurrentSkipListSet<String> visitedUrls = new ConcurrentSkipListSet<>();
 
     for (String url : startingUrls) {
-      pool.invoke(new ParallelWebCrawlerRecursiveTask(url, deadline, wordCounts, visitedUrls, maxDepth, parserFactory, clock, ignoredUrls));
+      ParallelWebCrawlerRecursiveTask task = new ParallelWebCrawlerRecursiveTask.Builder()
+              .setUrl(url)
+              .setDeadline(deadline)
+              .setPresentDepth(maxDepth)
+              .setWordCounts(wordCounts)
+              .setVisitedUrls(visitedUrls)
+              .setParserFactory(parserFactory)
+              .setClock(clock)
+              .setIgnoredUrls(ignoredUrls)
+              .build();
+
+      pool.invoke(task);
     }
 
-    if (wordCounts.isEmpty()) return new CrawlResult.Builder().setWordCounts(wordCounts).setUrlsVisited(visitedUrls.size()).build();
+    if (wordCounts.isEmpty())
+      return new CrawlResult.Builder().setWordCounts(wordCounts).setUrlsVisited(visitedUrls.size()).build();
 
     return new CrawlResult.Builder().setWordCounts(WordCounts.sort(wordCounts, popularWordCount)).setUrlsVisited(visitedUrls.size()).build();
 
