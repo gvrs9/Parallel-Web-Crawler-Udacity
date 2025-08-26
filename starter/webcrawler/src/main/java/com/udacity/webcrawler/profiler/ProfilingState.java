@@ -8,13 +8,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /**
  * Helper class that records method performance data from the method interceptor.
  */
 final class ProfilingState {
-  private final Map<String, Duration> data = new ConcurrentHashMap<>();
+  private final Map<String, Duration> methodDurations = new ConcurrentHashMap<>();
+  private final Map<String, Map<Long, AtomicLong>> threadCallCounts = new ConcurrentHashMap<>();
 
   /**
    * Records the given method invocation data.
@@ -23,15 +25,23 @@ final class ProfilingState {
    * @param method       the method that was called.
    * @param elapsed      the amount of time that passed while the method was called.
    */
-  void record(Class<?> callingClass, Method method, Duration elapsed) {
+  void record(Class<?> callingClass, Method method, Duration elapsed, long threadId) {
     Objects.requireNonNull(callingClass);
     Objects.requireNonNull(method);
     Objects.requireNonNull(elapsed);
+
     if (elapsed.isNegative()) {
       throw new IllegalArgumentException("negative elapsed time");
     }
+
     String key = formatMethodCall(callingClass, method);
-    data.compute(key, (k, v) -> (v == null) ? elapsed : v.plus(elapsed));
+
+    methodDurations.compute(key, (k, v) -> (v == null) ? elapsed : v.plus(elapsed));
+
+    threadCallCounts
+            .computeIfAbsent(key, k -> new ConcurrentHashMap<>())
+            .computeIfAbsent(threadId, t -> new AtomicLong())
+            .incrementAndGet();
   }
 
   /**
@@ -43,17 +53,35 @@ final class ProfilingState {
    * this {@code write()} method for {@code M()} should be 3 seconds.
    */
   void write(Writer writer) throws IOException {
-    List<String> entries =
-        data.entrySet()
-            .stream()
-            .sorted(Map.Entry.comparingByKey())
-            .map(e -> e.getKey() + " took " + formatDuration(e.getValue()) + System.lineSeparator())
-            .collect(Collectors.toList());
+    for (String key : methodDurations.keySet()) {
+      Duration total = methodDurations.get(key);
 
-    // We have to use a for-loop here instead of a Stream API method because Writer#write() can
-    // throw an IOException, and lambdas are not allowed to throw checked exceptions.
-    for (String entry : entries) {
-      writer.write(entry);
+      // Aggregate total calls across all threads
+      long totalCalls = threadCallCounts
+              .getOrDefault(key, Map.of())
+              .values()
+              .stream()
+              .mapToLong(AtomicLong::get)
+              .sum();
+
+      writer.write(key + " took " + formatDuration(total));
+      if (totalCalls > 0) {
+        writer.write(" (called " + totalCalls + " times)");
+      }
+      writer.write(System.lineSeparator());
+
+      Map<Long, AtomicLong> threadCounts = threadCallCounts.getOrDefault(key, Map.of());
+      for (Map.Entry<Long, AtomicLong> entry : threadCounts.entrySet()) {
+        long threadId = entry.getKey();
+        long calls = entry.getValue().get();
+
+        Duration avgDuration = total.dividedBy((calls == 0 ? 1 : calls));
+
+        writer.write("[Thread ID: " + threadId + " (called " + calls + " times)]");
+        writer.write(" - Average duration: " + formatDuration(avgDuration));
+        writer.write(System.lineSeparator());
+      }
+      writer.write(System.lineSeparator());
     }
   }
 
@@ -73,6 +101,6 @@ final class ProfilingState {
    */
   private static String formatDuration(Duration duration) {
     return String.format(
-        "%sm %ss %sms", duration.toMinutes(), duration.toSecondsPart(), duration.toMillisPart());
+            "%sm %ss %sms", duration.toMinutes(), duration.toSecondsPart(), duration.toMillisPart());
   }
 }
